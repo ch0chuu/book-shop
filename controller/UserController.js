@@ -93,23 +93,39 @@ const passwordResetRequest = (req, res) => {
 const passwordReset = (req, res) => {
     const { email, password } = req.body
 
-    let sql = 'UPDATE users SET password = ? WHERE email = ?'
-    let values = [password, email]
+    let sql = 'SELECT * FROM users WHERE email = ?'
+    conn.query(sql, [email], (err, result) => {
+        if (err) {
+            console.log(err)
+            return res.status(StatusCodes.BAD_REQUEST).end()
+        }
 
-    conn.query(sql, values, 
-        (err, results) => {
+        if (result.length === 0) {
+            return res.status(StatusCodes.BAD_REQUEST).end()
+        }
+
+        // 새로운 salt 생성 후 비밀번호 해싱
+        const salt = crypto.randomBytes(10).toString('base64')
+        const hashPassword = crypto.pbkdf2Sync(password, salt, 10000, 10, 'sha512').toString('base64')
+
+        let updateSql = 'UPDATE users SET password = ?, salt = ? WHERE email = ?'
+        let values = [hashPassword, salt, email]
+
+        conn.query(updateSql, values, (err, results) => {
             if (err) {
                 console.log(err)
                 return res.status(StatusCodes.BAD_REQUEST).end()
             }
 
-            if (results.affectedRows == 0) 
+            if (results.affectedRows == 0) {
                 return res.status(StatusCodes.BAD_REQUEST).end()
-            else
-                return res.status(StatusCodes.OK).json(results)
-        }
-    )
+            } else {
+                return res.status(StatusCodes.OK).end()
+            }
+        })
+    })
 }
+
 
 module.exports = {
     join,
