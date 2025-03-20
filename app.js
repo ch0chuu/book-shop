@@ -11,7 +11,7 @@ const bookRouter = require('./routes/books')
 const likeRouter = require('./routes/likes')
 const cartRouter = require('./routes/carts')
 const orderRouter = require('./routes/orders')
-const categoryRouter = reqire('./routes/category')
+const categoryRouter = require('./routes/category')
 
 
 app.use("/users",userRouter)

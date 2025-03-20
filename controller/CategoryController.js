@@ -13,6 +13,6 @@ const allCategory = (req, res) => {
     });
 };
 
-exports.module = {
+module.exports = {
     allCategory
 }
