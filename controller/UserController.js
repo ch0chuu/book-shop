@@ -36,35 +36,35 @@ const login = (req, res) => {
     conn.query(sql, values, (err, results) => {
         if (err) {
             console.log(err)
-            return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: '서버 오류' })
+            return res.status(StatusCodes.BAD_REQUEST).end()
         }
 
         if (results.length === 0) {
-            return res.status(StatusCodes.UNAUTHORIZED).json({ message: '이메일이 존재하지 않습니다.' })
+            return res.status(StatusCodes.BAD_REQUEST).end()
         }
 
-        const loginUser = results[0] 
-        if (loginUser && loginUser.password === password) {
-          
+        const loginUser = results[0]
+        const salt = loginUser.salt
+        const hashPassword = crypto.pbkdf2Sync(password, salt, 10000, 10, 'sha512').toString('base64')
+
+        if (loginUser.password === hashPassword) {
             const token = jwt.sign(
                 { email: loginUser.email }, 
                 process.env.PRIVATE_KEY,   
                 { expiresIn: '5m', issuer: 'sujeong' }
             )
 
-            
             res.cookie('token', token, {
                 httpOnly: true
             })
 
-            console.log(token)
-
-            return res.status(StatusCodes.OK).json(results)
+            return res.status(StatusCodes.OK).end()
         } else {
-            return res.status(StatusCodes.UNAUTHORIZED).end()
+            return res.status(StatusCodes.BAD_REQUEST).end()
         }
     })
 }
+
 
 const passwordResetRequest = (req, res) => {
     const { email } = req.body
